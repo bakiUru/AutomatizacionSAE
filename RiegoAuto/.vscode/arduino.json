@@ -2,5 +2,6 @@
     "port": "COM3",
     "configuration": "cpu=atmega2560",
     "board": "arduino:avr:mega",
-    "sketch": "RiegoAuto.ino"
+    "sketch": "RiegoAuto.ino",
+    "programmer": "arduino:avrisp"
 }

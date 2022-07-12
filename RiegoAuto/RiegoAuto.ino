@@ -30,9 +30,11 @@ RtcDS1302<ThreeWire> Rtc(myWire);
 time_t proxRiego, hora_Riego;
 
 //Variables de ingreso por el teclado 
-bool proxriegoSet = false; 
-char op = 's';
+bool proxriegoSet = false;
 
+int op = "s";
+int dRIEGO, mRIEGO;
+boolean riegoManual = false;
 /******************************************************/
 /******************************************************/
 //Solucion alternativa al problema de la creacion de la nueva fecha del proximo riego
@@ -127,46 +129,81 @@ tiempoStart = millis();
 //PruebaSETEOdeHORA   MANUAL
 do
 {
-    String diaR;
-    String mesR;
-    int contI=0;
-    while(Serial.available()> 0 && contI != 2)
+    Serial.flush();
+    Serial.read();
+       delay(1000);
+      
+  //Riego Manual?
+  int ingresoManual;
+    Serial.print("Ingreso Manual -> (si = 1 / no = 0)");
+    while (Serial.available() == 0)
+     //ESPERO LECTURA//
+    {                Serial.read();             }
+    if(Serial.available() > 0 )
     {
-       Serial.print("Ingrese Dia - : ");
-        diaR = Serial.readStringUntil('\n');
-        contI++;
-       Serial.print("Ingrese Mes - : ");
-        mesR = Serial.readStringUntil('\n');    
-        contI++;
+        ingresoManual = Serial.read();
+        Serial.println(ingresoManual);
+
     }
-    if (contI == 2)
+        
+    if (ingresoManual == 48)
     {
+      riegoManual = false;
+      op ='s';
+      proxriegoSet = true;
+    }
+    else{
+      riegoManual = true;  
+      String diaR;
+      String mesR;
+      delay(1000);
+      Serial.print("Ingrese Dia -> ");
+      while (Serial.available() == 0)
+       //ESPERO LECTURA//
+      { 
+        if(Serial.available() == 0 )           
+          Serial.read(); 
+       
+                    
+      }
+      delay(1000);
+      if(Serial.available() > 0 )
+          diaR = Serial.readStringUntil('\n');
+      Serial.println("Ingrese Mes -> ");
+      while (Serial.available() == 0)
+      //ESPERO LECTURA//
+      {            Serial.read();                 }
+         if(Serial.available() > 0)
+          mesR = Serial.readStringUntil('\n');    
+  
       Serial.println("Dia - Ingresado: "+String(diaR));
       Serial.println("MES - Ingresado: "+String(mesR));
-      Serial.print("Es correcto¡? (s/n) : ");
-      op = Serial.read();
-
-    if (op == 's')
-    {
-      int d, m;
-      d = diaR.toInt();
-      m = mesR.toInt();
-      proxRiego = SetFecha(d,m,myRTC.Year());
-            proxriegoSet = true;
+      Serial.println("Es correcto el Proximo Riego? (s/n) : ");
+      while (Serial.available() == 0)
+      //ESPERO LECTURA//
+      {                             }
+      if (Serial.available() > 0)
+           op = Serial.read();
+      
+      if (op == 115)
+      {
+        dRIEGO = diaR.toInt();
+        mRIEGO = mesR.toInt();
+        Serial.println(op);
+        proxriegoSet = true;
+      }
+      else{
+        proxriegoSet = false;
+      }
+      
     }
-
-    else
-      proxriegoSet = false;
-    }
-    
-    
 }while (op == 'n' && proxriegoSet == false);
 
 
 
 //setTime(myRTC.Hour(),myRTC.Minute(),myRTC.Second(),myRTC.Month(),myRTC.Day(),myRTC.Year()); //Hora seteada a mano sin RTC 
 hora_Riego = SetFechaCompleta(myRTC.Year(),myRTC.Month(),myRTC.Day(),06,00,00);
-proxRiego = SetFecha(6,29,2022);
+
 
 Serial.flush();
 }
@@ -179,14 +216,10 @@ void loop(){
    bool Riego= false, llueve = false, tanque = false;
    int aguaDiaria=5, aguaTot=0;
 
+ 
 if (proxriegoSet == true)
 {
-  //Control de Ingreso fecha
-    if (Serial.available()>0)
-    {
-        buffer_string[7] = Serial.read();
-        Serial.print(buffer_string);
-    }  
+
 
 Serial.println("------- DATOS FECHA Reloj -------");   
 Serial.println("Dia: "+String(myRTC.Day()));
@@ -251,7 +284,16 @@ delay(5000);
 
 Mostrar_Hora(hora_Riego);
 
-
+//CONTROL DE RIEGO
+ if(myRTC.Day()== dRIEGO)
+ {
+    Serial.println("Se Riega :) es el Dia");
+    Riego = true;   
+ }else{
+    Riego = false; 
+    Serial.println("No Se Riega :( --- Mañana ansioso");
+ 
+ }
 
 
 
@@ -293,23 +335,21 @@ Mostrar_Hora(hora_Riego);
       
     }
   Serial.println("Se Regaron:  "+ String(aguaTot) + " lts.");
-  proxRiego = FechaRiego(myRTC.Day(),myRTC.Month(),myRTC.Year(), frecRiego);
-  Serial.println("El Proximo Riego esta Programado para "+ String(myRTC.Day() + 1 ) + " de " + String(myRTC.Month()));
+  if (riegoManual == false)
+  {
+    //cada vez que riego sumo un dia para hacerlo periodico // tambien podemos añadir frecuencia de riego // colocar despues
+    dRIEGO = myRTC.Day() + 1 ;
+    Serial.println("El Proximo Riego Automatico sera el dia: "+ String(dRIEGO) + " del " + String(mRIEGO));
+  }
+  else
+    Serial.println("El Proximo Riego esta Programado Manualmente para "+ String(dRIEGO) + " de " + String(mRIEGO));
   
 
   Riego = true;
   
  }
 
- if(myRTC.Day()== day(proxRiego))
- {
-    Serial.println("Se Riega :) es el Dia");
-    Riego = true;   
- }else{
-    Riego = false; 
-    Serial.println("No Se Riega :( --- Mañana ansioso");
- 
- }
+
 }
  
 }

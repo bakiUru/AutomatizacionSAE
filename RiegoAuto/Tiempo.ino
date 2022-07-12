@@ -33,7 +33,7 @@ time_t SetFechaCompleta(int y, int m, int d, int h, int mi, int s)
   return makeTime(Fecha);
   }
 
-time_t SetFecha(int d, int m, int y)
+time_t Set_Fecha(int d, int m, int y)
 {
   tmElements_t Fecha;
   Fecha.Day = d;
@@ -88,6 +88,3 @@ bool retardo(unsigned long p)
     else
       return true;
   }
-
-
-

@@ -14,7 +14,7 @@ void Hora_Reloj (myWire);
 //Constructor de Fecha Completa sin reloj
 time_t SetFechaCompleta(int, int, int, int, int, int );
 
-time_t SetFecha(int, int, int);
+time_t Set_Fecha(int, int, int);
 
 time_t SetHora(int, int, int);
 
